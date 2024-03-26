@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-from enums import NewsAgency
+from enums.enums import NewsAgency
 
 
 class BaseCrawler:
