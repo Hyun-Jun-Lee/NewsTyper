@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from enums import NewsAgency
 
 
-class Crawler:
+class BaseCrawler:
     def __init__(self, agency: NewsAgency):
         if agency == NewsAgency.NAVER:
             self.base_url = "https://naver.com/news"
@@ -35,4 +35,7 @@ class Crawler:
         pass
 
     def get_content(self, article_url):
+        """
+        사용자가 선택한 기사의 원문
+        """
         pass
