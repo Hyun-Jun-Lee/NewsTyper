@@ -2,6 +2,8 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QComboBox, QLabel
 
+from enums.enums import NewsCategory
+
 
 class NewTyper(QWidget):
     def __init__(
@@ -18,10 +20,9 @@ class NewTyper(QWidget):
 
         self.layout = QVBoxLayout()
         self.comboBox = QComboBox(self)
-        self.comboBox.addItem("스포츠")
-        self.comboBox.addItem("경제")
-        self.comboBox.addItem("사회")
-        self.comboBox.addItem("세계")
+
+        for category in NewsCategory:
+            self.comboBox.addItem(category.value, category)
 
         self.label = QLabel("선택된 카테고리: ", self)
 
