@@ -6,12 +6,10 @@ from enums.enums import NewsAgency
 
 class BaseCrawler:
     def __init__(self, agency: NewsAgency):
-        if agency == NewsAgency.NAVER:
-            self.base_url = "https://naver.com/news"
-        elif agency == NewsAgency.GOOGLE:
-            self.base_url = "https://news.google.com"
+        if agency == NewsAgency.YNA:
+            self.base_url = "https://www.yna.co.kr/"
         elif agency == NewsAgency.HANGYUNG:
-            self.base_url = "https://hangyung.com"
+            self.base_url = "https://www.hankyung.com/"
         else:
             raise ValueError(f"Wrong Agency : {agency}")
 
