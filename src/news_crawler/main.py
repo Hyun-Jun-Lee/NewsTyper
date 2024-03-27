@@ -8,7 +8,7 @@ class BaseCrawler:
     def __init__(self, agency: NewsAgency):
         if agency == NewsAgency.YNA:
             self.base_url = "https://www.yna.co.kr/"
-        elif agency == NewsAgency.HANGYUNG:
+        elif agency == NewsAgency.HANKYUNG:
             self.base_url = "https://www.hankyung.com/"
         else:
             raise ValueError(f"Wrong Agency : {agency}")
