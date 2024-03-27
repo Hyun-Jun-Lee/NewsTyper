@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QLabel,
     QHBoxLayout,
+    QListWidget,
+    QPushButton,
 )
 
 from enums.enums import NewsAgency, YnaCategory, HankyungsCategory
@@ -21,6 +23,8 @@ class NewTyper(QWidget):
         self, parent: QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...
     ) -> None:
         super().__init__()
+        self.current_crawler = None
+        self.current_article = None
         self.init_ui()
 
     def init_ui(self):
@@ -30,6 +34,11 @@ class NewTyper(QWidget):
         self.show()
 
         hbox = QHBoxLayout()
+
+        # "이전" 버튼
+        self.back_button = QPushButton("이전")
+        hbox.addWidget(self.back_button)
+        self.back_button.hide()
 
         # 언론사 선택
         agency_layout = QHBoxLayout()
@@ -63,22 +72,60 @@ class NewTyper(QWidget):
 
         # 수직 정렬
         vbox = QVBoxLayout()
-        vbox.addStretch(0)
         vbox.addLayout(hbox)
-        vbox.addStretch(3)
+        vbox.addStretch(1)
+
+        self.article_list = QListWidget(self)
+        self.article_list.itemClicked.connect(self.display_article_content)
+        vbox.addWidget(self.article_list)
+        vbox.addStretch(5)
 
         self.setLayout(vbox)
 
     def choice_agency(self, index):
+        from news_crawler import YnaCrawler, HankyungCrawler
+
         selected_agency = self.agency_combo_box.itemData(index)
         self.category_combo_box.clear()
 
         if selected_agency == NewsAgency.YNA:
+            self.current_crawler = YnaCrawler(selected_agency)
+            self.category_combo_box.addItem("선택해주세요", None)
             for category in YnaCategory:
                 self.category_combo_box.addItem(category.name, category)
         elif selected_agency == NewsAgency.HANKYUNG:
+            self.current_crawler = HankyungCrawler(selected_agency)
+            self.category_combo_box.addItem("선택해주세요", None)
             for category in HankyungsCategory:
                 self.category_combo_box.addItem(category.name, category)
+
+        # 카테고리 선택 시 실행
+        self.category_combo_box.activated.connect(self.display_article_title)
+
+    def display_article_title(self, index):
+        self.back_button.hide()
+
+        selected_category = self.category_combo_box.itemData(index)
+        if selected_category is not None and self.current_crawler:
+            # 선택된 카테고리에 따라 기사 링크 가져오기
+            self.current_article = self.current_crawler.get_article_links(
+                selected_category
+            )
+
+            self.article_list.clear()
+            for title, url in self.current_article.items():
+                self.article_list.addItem(title)
+
+            self.article_list.itemClicked.connect(self.display_article_content)
+
+    def display_article_content(self, item):
+        # 선택된 기사의 본문을 가져옵니다.
+        self.back_button.show()
+        self.back_button.clicked.connect(self.display_article_title)
+        title = item.text()
+
+        # 기사 본문
+        content = self.current_crawler.get_article_content(self.current_article[title])
 
 
 if __name__ == "__main__":
