@@ -11,6 +11,8 @@ beautifulsoup4 = "4.12.3"
 pyqt5 = "5.15.10"
 requests = "2.31.0"
 wpm = "1.51.5"
+black = "^24.3.0"
+isort = "^5.13.2"
 
 
 [build-system]
