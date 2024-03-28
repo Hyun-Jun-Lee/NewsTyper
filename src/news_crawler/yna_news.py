@@ -1,4 +1,3 @@
-import asyncio
 from typing import Dict
 
 from .base import BaseCrawler
@@ -6,8 +5,10 @@ from enums.enums import YnaCategory
 
 
 class YnaCrawler(BaseCrawler):
-    def get_article_links(self, category: YnaCategory) -> Dict[str:str]:
+    def get_article_links(self, category: YnaCategory) -> Dict[str, str]:
         target_url = f"{self.base_url}{category.value}"
+        # TODO : parsed에서 기사 제목, url 추출
+        parsed = self.parse_html(url=target_url)
         return
 
     def get_article_content(self, article_url):
