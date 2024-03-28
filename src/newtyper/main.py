@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -13,9 +14,23 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QListWidget,
     QPushButton,
+    QLineEdit,
+    QTextEdit,
+    QMessageBox,
 )
 
 from enums.enums import NewsAgency, YnaCategory, HankyungsCategory
+
+
+class CustomTextEdit(QTextEdit):
+    def __init__(self, parent=None):
+        super(CustomTextEdit, self).__init__(parent)
+
+    def keyPressEvent(self, e: QKeyEvent):
+        if e.key() == Qt.Key_Return and not (e.modifiers() & Qt.ShiftModifier):
+            self.parent().check_and_continue()  # 부모 위젯의 check_and_continue 메서드 호출
+        else:
+            super().keyPressEvent(e)
 
 
 class NewTyper(QWidget):
@@ -75,12 +90,22 @@ class NewTyper(QWidget):
         vbox.addLayout(hbox)
         vbox.addStretch(1)
 
+        # 기사 제목
         self.article_list = QListWidget(self)
         self.article_list.itemClicked.connect(self.display_article_content)
         vbox.addWidget(self.article_list)
         vbox.addStretch(5)
 
+        # 기사 본문
+        self.sentence_label = QLabel("여기에 기사 내용이 표시됩니다.")
+        self.user_input = QLineEdit(self)
+
+        vbox.addWidget(self.sentence_label)
+        vbox.addWidget(self.user_input)
+
         self.setLayout(vbox)
+
+        self.user_input.textChanged.connect(self.check_and_continue)
 
     def choice_agency(self, index):
         from news_crawler import YnaCrawler, HankyungCrawler
@@ -121,11 +146,46 @@ class NewTyper(QWidget):
     def display_article_content(self, item):
         # 선택된 기사의 본문을 가져옵니다.
         self.back_button.show()
+
         self.back_button.clicked.connect(self.display_article_title)
         title = item.text()
 
         # 기사 본문
         content = self.current_crawler.get_article_content(self.current_article[title])
+
+        # 본문을 문장 단위로 분리
+        self.sentences = content.split(". ")
+        self.current_sentence_index = 0
+
+        # 첫 문장 출력
+        self.display_next_sentence()
+
+    def display_next_sentence(self):
+        if self.current_sentence_index < len(self.sentences):
+            self.current_sentence = self.sentences[self.current_sentence_index]
+            self.sentence_label.setText(self.current_sentence)  # QLabel에 문장 표시
+            self.user_input.clear()  # 사용자 입력 필드 초기화
+        else:
+            QMessageBox.information(self, "완료", "기사를 모두 읽었습니다.")
+            self.user_input.clear()
+            self.sentence_label.setText("")
+
+    def check_and_continue(self):
+        user_input = self.user_input.text()
+        correct_input = self.current_sentence[: len(user_input)]
+
+        if user_input == self.current_sentence:
+            # 사용자가 문장을 정확히 입력했다면, 다음 문장으로 이동
+            self.current_sentence_index += 1
+            self.display_next_sentence()
+            self.user_input.setStyleSheet("")  # 기본 스타일로 재설정
+        else:
+            if user_input == correct_input:
+                # 입력이 문장의 일부와 일치하는 경우, 테두리를 초록색으로 변경
+                self.user_input.setStyleSheet("border: 2px solid green;")
+            else:
+                # 입력이 잘못된 경우, 테두리를 빨간색으로 변경
+                self.user_input.setStyleSheet("border: 2px solid red;")
 
 
 if __name__ == "__main__":
