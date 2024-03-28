@@ -247,6 +247,9 @@ class NewTyper(QWidget):
             ),
         )
         self.animation.setKeyValueAt(1, start_geometry)
+        self.animation.finished.connect(
+            lambda: self.user_input.setGeometry(start_geometry)
+        )
         self.animation.start()
 
 
