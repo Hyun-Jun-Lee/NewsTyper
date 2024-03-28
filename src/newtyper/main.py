@@ -50,8 +50,6 @@ class NewTyper(QWidget):
 
         hbox = QHBoxLayout()
 
-        # "이전" 버튼
-
         # 언론사 선택
         agency_layout = QHBoxLayout()
         agency_layout.addStretch(1)
@@ -99,6 +97,7 @@ class NewTyper(QWidget):
         vbox.addWidget(self.completed_sentences_display)
 
         # 기사 타이핑
+        # TODO : sentence_label 과 user_input 배치 정렬 / 메서드 정리
         self.sentence_label = QLabel("여기에 기사 내용이 표시됩니다.")
         self.user_input = QLineEdit(self)
         self.animation = QPropertyAnimation(self.user_input, b"geometry")
