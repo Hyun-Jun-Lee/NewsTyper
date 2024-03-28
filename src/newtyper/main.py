@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPropertyAnimation, QRect, pyqtProperty
 from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import (
     QApplication,
@@ -51,9 +51,6 @@ class NewTyper(QWidget):
         hbox = QHBoxLayout()
 
         # "이전" 버튼
-        self.back_button = QPushButton("이전")
-        hbox.addWidget(self.back_button)
-        self.back_button.hide()
 
         # 언론사 선택
         agency_layout = QHBoxLayout()
@@ -96,15 +93,22 @@ class NewTyper(QWidget):
         vbox.addWidget(self.article_list)
         vbox.addStretch(5)
 
-        # 기사 본문
+        # 타이핑 완료 문장
+        self.completed_sentences_display = QTextEdit()
+        self.completed_sentences_display.setReadOnly(True)
+        vbox.addWidget(self.completed_sentences_display)
+
+        # 기사 타이핑
         self.sentence_label = QLabel("여기에 기사 내용이 표시됩니다.")
         self.user_input = QLineEdit(self)
+        self.animation = QPropertyAnimation(self.user_input, b"geometry")
 
         vbox.addWidget(self.sentence_label)
         vbox.addWidget(self.user_input)
 
         self.setLayout(vbox)
 
+        # 사용자 입력 감지
         self.user_input.textChanged.connect(self.check_and_continue)
 
     def choice_agency(self, index):
@@ -128,7 +132,6 @@ class NewTyper(QWidget):
         self.category_combo_box.activated.connect(self.display_article_title)
 
     def display_article_title(self, index):
-        self.back_button.hide()
 
         selected_category = self.category_combo_box.itemData(index)
         if selected_category is not None and self.current_crawler:
@@ -145,9 +148,7 @@ class NewTyper(QWidget):
 
     def display_article_content(self, item):
         # 선택된 기사의 본문을 가져옵니다.
-        self.back_button.show()
 
-        self.back_button.clicked.connect(self.display_article_title)
         title = item.text()
 
         # 기사 본문
@@ -163,8 +164,10 @@ class NewTyper(QWidget):
     def display_next_sentence(self):
         if self.current_sentence_index < len(self.sentences):
             self.current_sentence = self.sentences[self.current_sentence_index]
-            self.sentence_label.setText(self.current_sentence)  # QLabel에 문장 표시
-            self.user_input.clear()  # 사용자 입력 필드 초기화
+            # QLabel에 문장 표시
+            self.sentence_label.setText(self.current_sentence)
+            # 사용자 입력 필드 초기화
+            self.user_input.clear()
         else:
             QMessageBox.information(self, "완료", "기사를 모두 읽었습니다.")
             self.user_input.clear()
@@ -175,7 +178,8 @@ class NewTyper(QWidget):
         correct_input = self.current_sentence[: len(user_input)]
 
         if user_input == self.current_sentence:
-            # 사용자가 문장을 정확히 입력했다면, 다음 문장으로 이동
+            # 사용자가 문장을 정확히 입력했다면, 기사 본문에 추가하고 다음 문장으로 이동
+            self.completed_sentences_display.append(self.current_sentence)
             self.current_sentence_index += 1
             self.display_next_sentence()
             self.user_input.setStyleSheet("")  # 기본 스타일로 재설정
@@ -185,7 +189,65 @@ class NewTyper(QWidget):
                 self.user_input.setStyleSheet("border: 2px solid green;")
             else:
                 # 입력이 잘못된 경우, 테두리를 빨간색으로 변경
+                self.shakeAnimation()
                 self.user_input.setStyleSheet("border: 2px solid red;")
+
+    def shakeAnimation(self):
+        start_geometry = self.user_input.geometry()
+        self.animation.setDuration(100)  # 애니메이션 지속 시간 설정
+        self.animation.setLoopCount(1)  # 애니메이션 반복 횟수
+        self.animation.setKeyValueAt(0, start_geometry)
+        self.animation.setKeyValueAt(
+            0.1,
+            QRect(
+                start_geometry.x() - 10,
+                start_geometry.y(),
+                start_geometry.width(),
+                start_geometry.height(),
+            ),
+        )
+        self.animation.setKeyValueAt(0.2, start_geometry)
+        self.animation.setKeyValueAt(
+            0.3,
+            QRect(
+                start_geometry.x() + 10,
+                start_geometry.y(),
+                start_geometry.width(),
+                start_geometry.height(),
+            ),
+        )
+        self.animation.setKeyValueAt(0.4, start_geometry)
+        self.animation.setKeyValueAt(
+            0.5,
+            QRect(
+                start_geometry.x() - 10,
+                start_geometry.y(),
+                start_geometry.width(),
+                start_geometry.height(),
+            ),
+        )
+        self.animation.setKeyValueAt(0.6, start_geometry)
+        self.animation.setKeyValueAt(
+            0.7,
+            QRect(
+                start_geometry.x() + 10,
+                start_geometry.y(),
+                start_geometry.width(),
+                start_geometry.height(),
+            ),
+        )
+        self.animation.setKeyValueAt(0.8, start_geometry)
+        self.animation.setKeyValueAt(
+            0.9,
+            QRect(
+                start_geometry.x() - 10,
+                start_geometry.y(),
+                start_geometry.width(),
+                start_geometry.height(),
+            ),
+        )
+        self.animation.setKeyValueAt(1, start_geometry)
+        self.animation.start()
 
 
 if __name__ == "__main__":
