@@ -1,4 +1,4 @@
-from .main import BaseCrawler
+from .base import BaseCrawler
 
 
 class HankyungCrawler(BaseCrawler):

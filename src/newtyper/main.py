@@ -22,17 +22,6 @@ from PyQt5.QtWidgets import (
 from enums.enums import NewsAgency, YnaCategory, HankyungsCategory
 
 
-class CustomTextEdit(QTextEdit):
-    def __init__(self, parent=None):
-        super(CustomTextEdit, self).__init__(parent)
-
-    def keyPressEvent(self, e: QKeyEvent):
-        if e.key() == Qt.Key_Return and not (e.modifiers() & Qt.ShiftModifier):
-            self.parent().check_and_continue()  # 부모 위젯의 check_and_continue 메서드 호출
-        else:
-            super().keyPressEvent(e)
-
-
 class NewTyper(QWidget):
     def __init__(
         self, parent: QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...
