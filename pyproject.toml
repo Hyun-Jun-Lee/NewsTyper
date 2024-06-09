@@ -14,6 +14,9 @@ wpm = "1.51.5"
 black = "^24.3.0"
 isort = "^5.13.2"
 aiohttp = "^3.9.3"
+sqlalchemy = "^2.0.30"
+sqlalchemy-utils = "^0.41.2"
+pandas = "^2.2.2"
 
 
 [build-system]
