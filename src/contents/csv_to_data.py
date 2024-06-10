@@ -30,11 +30,20 @@ def get_data():
     )
 
     # 컬럼 이름 변경
-    anime_quote_data.rename(columns={"Character": "Author"}, inplace=True)
-    movie_quote_data.rename(columns={"quote": "Quote", "movie": "Author"}, inplace=True)
+    all_quote_data.rename(
+        columns={"Quote": "en_content", "Character": "author"}, inplace=True
+    )
+    anime_quote_data.rename(
+        columns={"Quote": "en_content", "Character": "author"}, inplace=True
+    )
+    movie_quote_data.rename(
+        columns={"quote": "en_content", "movie": "author"}, inplace=True
+    )
 
     # DataFrame 병합
     combined_data = pd.concat(
         [all_quote_data, anime_quote_data, movie_quote_data], ignore_index=True
     )
+    combined_data["kr_content"] = None
+    combined_data["is_custom"] = False
     return combined_data
