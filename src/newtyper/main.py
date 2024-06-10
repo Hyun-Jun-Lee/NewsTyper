@@ -19,7 +19,8 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 
-from enums.enums import NewsAgency, YnaCategory, HankyungsCategory
+from .data_manager import DataManager
+from enums.enums import LanguageEnum
 
 
 class NewTyper(QWidget):
@@ -27,9 +28,19 @@ class NewTyper(QWidget):
         self, parent: QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...
     ) -> None:
         super().__init__()
-        self.current_crawler = None
-        self.current_article = None
+        self.data_manager = DataManager()
+        self.current_quote = None
+        self.article_list = None
+        self.check_and_load_quotes()
         self.init_ui()
+
+    def check_and_load_quotes(self):
+        """데이터베이스 확인 및 초기화."""
+        if self.data_manager.is_empty():
+            result = self.data_manager.load_quotes()
+            if not result:
+                QMessageBox.critical(self, "오류", "데이터 로드에 실패했습니다.")
+                return
 
     def init_ui(self):
         self.setWindowTitle("NewsTyper")
@@ -46,39 +57,33 @@ class NewTyper(QWidget):
         agency_label = QLabel("뉴스 에이전시 선택:", self)
         agency_layout.addWidget(agency_label)
 
-        self.agency_combo_box = QComboBox(self)
-        self.agency_combo_box.addItem("선택해주세요", None)
-        agency_layout.addWidget(self.agency_combo_box)
+        self.language_combobox = QComboBox(self)
+        self.language_combobox.addItem("선택해주세요", None)
+        agency_layout.addWidget(self.language_combobox)
         hbox.addLayout(agency_layout)
 
-        for category in NewsAgency:
-            self.agency_combo_box.addItem(category.value, category)
+        for language in LanguageEnum:
+            self.language_combobox.addItem(language.value, language)
 
-        self.agency_combo_box.activated.connect(self.choice_agency)
+        self.language_combobox.activated.connect(self.choice_language)
 
-        # 카테고리 선택
-        category_layout = QHBoxLayout()
+        # 언어 선택
+        language_layout = QHBoxLayout()
 
-        category_label = QLabel("선택된 카테고리: ", self)
-        category_layout.addWidget(category_label)
+        language_label = QLabel("선택된 언어: ", self)
+        language_layout.addWidget(language_label)
 
-        self.category_combo_box = QComboBox(self)
-        self.category_combo_box.addItem("선택해주세요", None)
-        category_layout.addWidget(self.category_combo_box)
-        category_layout.addStretch(1)
+        self.language_combobox = QComboBox(self)
+        self.language_combobox.addItem("선택해주세요", None)
+        language_layout.addWidget(self.language_combobox)
+        language_layout.addStretch(1)
 
-        hbox.addLayout(category_layout)
+        hbox.addLayout(language_layout)
 
         # 수직 정렬
         vbox = QVBoxLayout()
         vbox.addLayout(hbox)
         vbox.addStretch(1)
-
-        # 기사 제목
-        self.article_list = QListWidget(self)
-        self.article_list.itemClicked.connect(self.display_article_content)
-        vbox.addWidget(self.article_list)
-        vbox.addStretch(5)
 
         # 타이핑 완료 문장
         self.completed_sentences_display = QTextEdit()
@@ -99,40 +104,26 @@ class NewTyper(QWidget):
         # 사용자 입력 감지
         self.user_input.textChanged.connect(self.check_and_continue)
 
-    def choice_agency(self, index):
+    def choice_language(self, index):
         from news_crawler import YnaCrawler, HankyungCrawler
 
-        selected_agency = self.agency_combo_box.itemData(index)
-        self.category_combo_box.clear()
+        selected_agency = self.language_combobox.itemData(index)
+        self.language_combobox.clear()
 
-        if selected_agency == NewsAgency.YNA:
-            self.current_crawler = YnaCrawler(selected_agency)
-            self.category_combo_box.addItem("선택해주세요", None)
-            for category in YnaCategory:
-                self.category_combo_box.addItem(category.name, category)
-        elif selected_agency == NewsAgency.HANKYUNG:
-            self.current_crawler = HankyungCrawler(selected_agency)
-            self.category_combo_box.addItem("선택해주세요", None)
-            for category in HankyungsCategory:
-                self.category_combo_box.addItem(category.name, category)
+        if selected_agency == LanguageEnum.KR.value:
+            # TODO : 언어 선택 후 활동
+            pass
+            # self.current_crawler = YnaCrawler(selected_agency)
+        else:
+            pass
 
         # 카테고리 선택 시 실행
-        self.category_combo_box.activated.connect(self.display_article_title)
+        self.language_combobox.activated.connect(self.display_quotes)
 
-    def display_article_title(self, index):
-
-        selected_category = self.category_combo_box.itemData(index)
-        if selected_category is not None and self.current_crawler:
-            # 선택된 카테고리에 따라 기사 링크 가져오기
-            self.current_article = self.current_crawler.get_article_links(
-                selected_category
-            )
-
-            self.article_list.clear()
-            for title, url in self.current_article.items():
-                self.article_list.addItem(title)
-
-            self.article_list.itemClicked.connect(self.display_article_content)
+    def display_quotes(self, index):
+        self.current_quote, self.current_author = self.data_manager.get_random_quote()
+        self.sentence_label.setText(self.current_quote)
+        self.user_input.clear()
 
     def display_article_content(self, item):
         # 선택된 기사의 본문을 가져옵니다.
@@ -140,7 +131,7 @@ class NewTyper(QWidget):
         title = item.text()
 
         # 기사 본문
-        content = self.current_crawler.get_article_content(self.current_article[title])
+        content = self.current_crawler.get_article_content(self.current_quote[title])
 
         # 본문을 문장 단위로 분리
         self.sentences = content.split(". ")
