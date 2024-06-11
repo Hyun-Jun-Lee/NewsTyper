@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 
-from .data_manager import DataManager
+from newtyper.data_manager import DataManager
 from enums.enums import LanguageEnum
 
 
@@ -50,17 +50,17 @@ class NewTyper(QWidget):
 
         hbox = QHBoxLayout()
 
-        # 언론사 선택
-        agency_layout = QHBoxLayout()
-        agency_layout.addStretch(1)
+        # 언어 선택
+        language_layout = QHBoxLayout()
+        language_layout.addStretch(1)
 
-        agency_label = QLabel("뉴스 에이전시 선택:", self)
-        agency_layout.addWidget(agency_label)
+        agency_label = QLabel("Select Language:", self)
+        language_layout.addWidget(agency_label)
 
         self.language_combobox = QComboBox(self)
-        self.language_combobox.addItem("선택해주세요", None)
-        agency_layout.addWidget(self.language_combobox)
-        hbox.addLayout(agency_layout)
+        self.language_combobox.addItem("Select", None)
+        language_layout.addWidget(self.language_combobox)
+        hbox.addLayout(language_layout)
 
         for language in LanguageEnum:
             self.language_combobox.addItem(language.value, language)
@@ -70,12 +70,7 @@ class NewTyper(QWidget):
         # 언어 선택
         language_layout = QHBoxLayout()
 
-        language_label = QLabel("선택된 언어: ", self)
-        language_layout.addWidget(language_label)
-
         self.language_combobox = QComboBox(self)
-        self.language_combobox.addItem("선택해주세요", None)
-        language_layout.addWidget(self.language_combobox)
         language_layout.addStretch(1)
 
         hbox.addLayout(language_layout)
@@ -105,64 +100,36 @@ class NewTyper(QWidget):
         self.user_input.textChanged.connect(self.check_and_continue)
 
     def choice_language(self, index):
-        from news_crawler import YnaCrawler, HankyungCrawler
-
-        selected_agency = self.language_combobox.itemData(index)
+        selected_language = self.language_combobox.itemData(index)
+        self.display_quotes(selected_language)
         self.language_combobox.clear()
 
-        if selected_agency == LanguageEnum.KR.value:
-            # TODO : 언어 선택 후 활동
-            pass
-            # self.current_crawler = YnaCrawler(selected_agency)
+    def display_quotes(self, language: str):
+        current_quote = self.data_manager.get_random_quote()
+        if language == LanguageEnum.KR:
+            self.current_quote = current_quote.kr_content
         else:
-            pass
+            self.current_quote = current_quote.en_content
+        self.current_author = current_quote.author
 
-        # 카테고리 선택 시 실행
-        self.language_combobox.activated.connect(self.display_quotes)
+        display_text = f"{self.current_quote} - {self.current_author}"
 
-    def display_quotes(self, index):
-        self.current_quote, self.current_author = self.data_manager.get_random_quote()
-        self.sentence_label.setText(self.current_quote)
+        self.sentence_label.setText(display_text)
+        self.sentence_label.setWordWrap(True)
         self.user_input.clear()
-
-    def display_article_content(self, item):
-        # 선택된 기사의 본문을 가져옵니다.
-
-        title = item.text()
-
-        # 기사 본문
-        content = self.current_crawler.get_article_content(self.current_quote[title])
-
-        # 본문을 문장 단위로 분리
-        self.sentences = content.split(". ")
-        self.current_sentence_index = 0
-
-        # 첫 문장 출력
-        self.display_next_sentence()
-
-    def display_next_sentence(self):
-        if self.current_sentence_index < len(self.sentences):
-            self.current_sentence = self.sentences[self.current_sentence_index]
-            # QLabel에 문장 표시
-            self.sentence_label.setText(self.current_sentence)
-            # 사용자 입력 필드 초기화
-            self.user_input.clear()
-        else:
-            QMessageBox.information(self, "완료", "기사를 모두 읽었습니다.")
-            self.user_input.clear()
-            self.sentence_label.setText("")
 
     def check_and_continue(self):
         user_input = self.user_input.text()
-        correct_input = self.current_sentence[: len(user_input)]
 
-        if user_input == self.current_sentence:
-            # 사용자가 문장을 정확히 입력했다면, 기사 본문에 추가하고 다음 문장으로 이동
-            self.completed_sentences_display.append(self.current_sentence)
-            self.current_sentence_index += 1
+        if not self.current_quote:
+            return
+
+        if user_input == self.current_quote:
             self.display_next_sentence()
+            self.display_quotes(self.language_combobox.currentData())
             self.user_input.setStyleSheet("")  # 기본 스타일로 재설정
         else:
+            correct_input = self.current_quote[: len(user_input)]
             if user_input == correct_input:
                 # 입력이 문장의 일부와 일치하는 경우, 테두리를 초록색으로 변경
                 self.user_input.setStyleSheet("border: 2px solid green;")
