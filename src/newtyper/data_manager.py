@@ -24,7 +24,7 @@ class DataManager:
         """
         try:
             data = get_data()
-            data.to_sql("quote", con=engine, if_exists="replace", index=False)
+            data.to_sql("quote", con=engine, if_exists="append", index=False)
         except FileNotFoundError as e:
             print(f"파일을 찾을 수 없습니다: {e}")
             return False
