@@ -7,6 +7,7 @@ anime_quote_file_path = data_folder / "AnimeQuotes.csv"
 movie_quote_file_path = data_folder / "movie_quotes.csv"
 
 
+# TODO : Author에서 '-' 제거 / Quote에서 "" 제거
 def get_data():
     all_quotes_df = pd.read_csv(all_quotes_file_path, usecols=["Quote", "Author"])
 
