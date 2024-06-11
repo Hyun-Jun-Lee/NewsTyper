@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
 from .base import ModelBase
+from contents.models import Quote, Article
 
 DATABASE_URL = "sqlite:///./quotes.db"
 
